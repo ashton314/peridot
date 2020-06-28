@@ -4,6 +4,7 @@
 
 (require 'org)
 (require 'selectrum)
+(require 'seq)
 
 (defvar-local character-file "peridot/characters.org")
 (defcustom max-character-entry 300 "Maximum length of a character entry")
@@ -13,24 +14,30 @@
   Just returns the headline if there's only one."
   (interactive)
   (let* ((character-name (word-at-point))
-         (character-entries (matching-character-locations character-name)))
+         (character-occurances (matching-character-headlines character-name))
+         (character-entries (seq-filter
+                             #'(lambda (entry) (string-match-p (regexp-quote character-name) (plist-get entry :raw-value)))
+                             (seq-map #'cadr
+                                      (seq-filter #'(lambda (entry) (eq (car entry) 'headline)) character-occurances)))))
     (cond ((eq nil character-entries)
            (message (format "No characters named '%s' found" character-name)))
           ((= (length character-entries) 1)
            (jump-to-location (car character-entries) character-file))
-          (t (message "Don't know how to handle multiple possiblities yet!")))))
+          (t (let* ((chosen-one (selectrum-completing-read (format "Which \"%s\"? " character-name) (seq-map #'(lambda (a) (plist-get a :raw-value)) character-entries)))
+                    (chosen-location (seq-find #'(lambda (i) (equal chosen-one (plist-get i :raw-value))) character-entries)))
+               (jump-to-location chosen-location character-file))))))
 
-(defun matching-character-locations (character-name)
+(defun matching-character-headlines (character-name)
   "Fetches a list of matching character headlines"
   (org-map-entries #'(lambda () (org-element--current-element 300))
-                   (format "ALIAS=\"%s\"" character-name)
+                   (format "/%s/" character-name)
                    (list character-file)))
 
 (defun jump-to-location (headline-desc filename)
   (xref-push-marker-stack)
   (find-file-other-window filename)
-  (goto-char (plist-get (cadr headline-desc) :begin))
-  (message (substitute-command-keys "Return to previous location with `\\[xref-pop-marker-stack]'.")))
+  (goto-char (plist-get headline-desc :begin))
+  (message (substitute-command-keys "Return to previous location with `\\[xref-pop-marker-stack]', or `\\[delete-window]' to close notes window.")))
 
 ;;;###autoload
 (define-minor-mode peridot-mode
