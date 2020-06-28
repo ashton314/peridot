@@ -6,10 +6,23 @@
 (require 'selectrum)
 (require 'seq)
 
-(defvar-local character-file "peridot/characters.org")
+(defcustom db-directory "peridot" "Directory under which peridot will search for commands")
 (defcustom max-character-entry 300 "Maximum length of a character entry")
 
-(defun find-this-character ()
+(defvar-local character-file (concat db-directory "/characters.org"))
+
+(defun peridot-init ()
+  "Initilize the Peridot story database. This will create a directory named `peridot/' in the current working directory"
+  (interactive)
+  (unless (file-directory-p db-directory)
+    (mkdir db-directory))
+  (if (file-directory-p db-directory)
+      (progn
+        (unless (file-exists-p character-file)
+          (write-region "#+TITLE: Characters\n" nil character-file nil 0)))
+    (message (format "\aUnable to create directory %s" db-directory))))
+
+(defun peridot-find-this-character ()
   "Prompts user to pick what character to use, given an alias.
   Just returns the headline if there's only one."
   (interactive)
@@ -41,10 +54,15 @@
 
 ;;;###autoload
 (define-minor-mode peridot-mode
-  "Extention of org-mode to help write files."
+  "Utilities to help write a novel.
+
+Keybindings
+-----------
+\\{peridot-map}
+"
   :lighter " peridot"
   :keymap (let ((peridot-map (make-sparse-keymap)))
-            (define-key peridot-map (kbd "M-.") 'find-this-character)
+            (define-key peridot-map (kbd "M-.") 'peridot-find-this-character)
             peridot-map))
 
 (provide 'peridot-mode)
