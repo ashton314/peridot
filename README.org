@@ -1,2 +1,6 @@
-# peridot
+#+TITLE: Peridot
+#+AUTHOR: Ashton Wiersdorf
+
 An Emacs minor-mode to facilitate writing novels and stories
+
+
