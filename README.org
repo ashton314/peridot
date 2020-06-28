@@ -3,4 +3,34 @@
 
 An Emacs minor-mode to facilitate writing novels and stories
 
+* Summary
 
+After requiring the file, run ~M-x peridot-mode~ inside the file where you are writing your story. If this is your first time running Peridot, you will also need to run ~M-x peridot-init~, which will set up the database directory. This operation /is/ idempotent: if the directory exists, it will /not/ be overwritten.
+
+Add characters as first-level headings in =peridot/characters.org=:
+
+#+begin_src org
+#+TITLE: Characters
+
+* Alice Whitacre
+
+Main protagonist. Has some information she wants to get to [[Bob Brown]].
+
+* Bob Brown
+
+Another nice character.
+
+* Eve Davenport
+
+A sinister figure attempting to sabotage [[Alice Whitacre][Alice]]'s hopes and dreams.
+#+end_src
+
+Next, in your main story file, move over to the name of a character and hit =M-.=. This should take you to the heading that has that word in it. If there are multiple matches (e.g. you have multiple characters named "Alice" or something), then it will offer you a list of choices.
+
+* Dependencies
+
+This program depends on [[https://github.com/raxod502/selectrum][Selectrum]], [[https://orgmode.org][Org]], and [[https://github.com/NicolasPetton/seq.el][Seq]]. (Seq should be included in Emacs 25.1 and later. If not, you can download it from [[https://elpa.gnu.org/][ELPA]].)
+
+* Author
+
+Ashton Wiersdorf
