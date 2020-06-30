@@ -20,9 +20,9 @@
 (defun peridot-init ()
   "Initilize the Peridot story database. This will create a directory named `peridot/' in the current working directory"
   (interactive)
-  (unless (file-directory-p db-directory)
-    (mkdir db-directory))
-  (if (file-directory-p db-directory)
+  (unless (file-directory-p (db-directory))
+    (mkdir peridot-db-name))
+  (if (file-directory-p (db-directory))
       (progn
         (unless (file-exists-p (character-file))
           (write-region "#+TITLE: Characters\n" nil (character-file) nil 0)))
