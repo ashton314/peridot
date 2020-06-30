@@ -6,10 +6,16 @@
 (require 'selectrum)
 (require 'seq)
 
-(defcustom db-directory "peridot" "Directory under which peridot will search for commands")
-(defcustom max-character-entry 300 "Maximum length of a character entry")
+(defcustom peridot-db-name ".peridot" "Directory under which peridot will search for database")
+(defcustom peridot-max-character-entry 300 "Maximum length of a character entry")
 
-(defvar-local character-file (concat db-directory "/characters.org"))
+(defun db-directory ()
+  "Returns full path to the peridot database directory."
+  (concat (locate-dominating-file buffer-file-name peridot-db-name) peridot-db-name))
+
+(defun character-file ()
+  "Returns full path to file in which characters are found."
+  (concat (db-directory) "/characters.org"))
 
 (defun peridot-init ()
   "Initilize the Peridot story database. This will create a directory named `peridot/' in the current working directory"
@@ -18,8 +24,8 @@
     (mkdir db-directory))
   (if (file-directory-p db-directory)
       (progn
-        (unless (file-exists-p character-file)
-          (write-region "#+TITLE: Characters\n" nil character-file nil 0)))
+        (unless (file-exists-p (character-file))
+          (write-region "#+TITLE: Characters\n" nil (character-file) nil 0)))
     (message (format "\aUnable to create directory %s" db-directory))))
 
 (defun peridot-find-this-character ()
@@ -35,16 +41,16 @@
     (cond ((eq nil character-entries)
            (message (format "No characters named '%s' found" character-name)))
           ((= (length character-entries) 1)
-           (jump-to-location (car character-entries) character-file))
+           (jump-to-location (car character-entries) (character-file)))
           (t (let* ((chosen-one (selectrum-completing-read (format "Which \"%s\"? " character-name) (seq-map #'(lambda (a) (plist-get a :raw-value)) character-entries)))
                     (chosen-location (seq-find #'(lambda (i) (equal chosen-one (plist-get i :raw-value))) character-entries)))
-               (jump-to-location chosen-location character-file))))))
+               (jump-to-location chosen-location (character-file)))))))
 
 (defun matching-character-headlines (character-name)
   "Fetches a list of matching character headlines"
   (org-map-entries #'(lambda () (org-element--current-element 300))
                    (format "/%s/" character-name)
-                   (list character-file)))
+                   (list (character-file))))
 
 (defun jump-to-location (headline-desc filename)
   (xref-push-marker-stack)
