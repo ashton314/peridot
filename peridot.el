@@ -8,14 +8,19 @@
 
 (defcustom peridot-db-name ".peridot" "Directory under which peridot will search for database")
 (defcustom peridot-max-character-entry 300 "Maximum length of a character entry")
+(defcustom peridot-inital-entities '("characters" "plot" "world" "research") "Default set of db files to create")
 
 (defun db-directory ()
   "Returns full path to the peridot database directory."
   (concat (locate-dominating-file buffer-file-name peridot-db-name) peridot-db-name))
 
-(defun character-file ()
-  "Returns full path to file in which characters are found."
-  (concat (db-directory) "/characters.org"))
+(defun entity-file (entity-type)
+  "Returns full path to the file of a given entity."
+  (concat (db-directory) (format "/%s.org" entity-type)))
+
+(defun all-entity-files ()
+  "Returns a list of all db files."
+  (file-expand-wildcards (format "%s/*.org" (db-directory))))
 
 (defun peridot-init ()
   "Initilize the Peridot story database. This will create a
@@ -24,12 +29,24 @@ directory named `.peridot/' in the current working directory"
   (unless (file-directory-p (db-directory))
     (mkdir peridot-db-name))
   (if (file-directory-p (db-directory))
-      (progn
-        (unless (file-exists-p (character-file))
-          (write-region "#+TITLE: Characters\n" nil (character-file) nil 0)))
+      (mapcar #'(lambda (entity-type)
+                  (unless (file-exists-p (entity-file entity-type))
+                    (write-region (format "#+TITLE: %s\n\n" (capitalize entity-type)) nil (entity-file entity-type) nil 0)))
+              peridot-inital-entities)
     (message (format "\aUnable to create directory %s" db-directory))))
 
-(defun peridot-find-entity (entity-file entity-type-name)
+(defun peridot-find-entity ()
+  "Searches all entity files in db for headlines that match the current word."
+  (interactive)
+  (let* ((entity-name (word-at-point))
+         (entity-occurances (matching-entity-headlines entity-name (all-entity-files))))
+    
+    (pp entity-occurances)
+;    (message entity-occurances)
+    ))
+
+
+(defun old--peridot-find-entity (entity-file entity-type-name)
   "Returns a function that when invoked interactively will jump
 to the given entity."
   #'(lambda ()
@@ -48,11 +65,11 @@ to the given entity."
                       (chosen-location (seq-find #'(lambda (i) (equal chosen-one (plist-get i :raw-value))) entity-entries)))
                  (jump-to-location chosen-location entity-file)))))))
   
-(defun matching-entity-headlines (entity-name entity-file)
-  "Fetches a list of matching headlines from `entity-file'"
-  (org-map-entries #'(lambda () (org-element--current-element peridot-max-character-entry))
+(defun matching-entity-headlines (entity-name entity-files)
+  "Fetches a list of matching headlines from `entity-files'"
+  (org-map-entries #'(lambda () (cons (buffer-name) (cdr (org-element--current-element peridot-max-character-entry))))
                    (format "/%s/" entity-name)
-                   (list entity-file)))
+                   entity-files))
 
 ;; (defun peridot-find-this-character ()
 ;;   "Prompts user to pick what character to use, given an alias.
@@ -94,8 +111,7 @@ Keybindings
 "
   :lighter " peridot"
   :keymap (let ((peridot-map (make-sparse-keymap)))
-            (define-key peridot-map (kbd "M-.") #'(lambda () (let ((finder (peridot-find-entity (character-file) "character")))
-                                                               (funcall finder))))
+            (define-key peridot-map (kbd "M-.") 'peridot-find-entity)
             peridot-map))
 
 (provide 'peridot-mode)
