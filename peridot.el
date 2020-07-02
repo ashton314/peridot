@@ -39,61 +39,30 @@ directory named `.peridot/' in the current working directory"
   "Searches all entity files in db for headlines that match the current word."
   (interactive)
   (let* ((entity-name (word-at-point))
-         (entity-occurances (matching-entity-headlines entity-name (all-entity-files))))
-    
-    (pp entity-occurances)
-;    (message entity-occurances)
-    ))
+         (entity-occurances (matching-entity-headlines entity-name (all-entity-files)))
+         (entity-matches (seq-filter
+                          #'(lambda (entry) (string-match-p (regexp-quote entity-name) (plist-get (cadr entry) :raw-value))) entity-occurances)))
 
+    (pp (cadar entity-matches))
 
-(defun old--peridot-find-entity (entity-file entity-type-name)
-  "Returns a function that when invoked interactively will jump
-to the given entity."
-  #'(lambda ()
-    (interactive)
-    (let* ((entity-name (word-at-point))
-           (entity-occurances (matching-entity-headlines entity-name entity-file))
-           (entity-entries (seq-filter
-                               #'(lambda (entry) (string-match-p (regexp-quote entity-name) (plist-get entry :raw-value)))
-                               (seq-map #'cadr
-                                        (seq-filter #'(lambda (entry) (eq (car entry) 'headline)) entity-occurances)))))
-      (cond ((eq nil entity-entries)
-             (message (format "No %s named '%s' found" entity-type-name entity-name)))
-            ((= (length entity-entries) 1)
-             (jump-to-location (car entity-entries) entity-file))
-            (t (let* ((chosen-one (selectrum-completing-read (format "Which \"%s\"? " entity-name) (seq-map #'(lambda (a) (plist-get a :raw-value)) entity-entries)))
-                      (chosen-location (seq-find #'(lambda (i) (equal chosen-one (plist-get i :raw-value))) entity-entries)))
-                 (jump-to-location chosen-location entity-file)))))))
-  
+    (cond ((eq nil entity-matches)
+           (message (format "No entity matching '%s' found.\a" entity-name)))
+
+          ;; Only one match
+          ((= (length entity-matches) 1)
+           (jump-to-location (cadar entity-matches) (concat (db-directory) "/" (caar entity-matches))))
+
+          ;; Let user pick from set of matches
+          (t (let* ((chosen-one (selectrum-completing-read (format "Which \"%s\"? " entity-name)
+                                                           (seq-map #'(lambda (a) (plist-get (cadr a) :raw-value)) entity-matches)))
+                    (chosen-location (seq-find #'(lambda (i) (equal chosen-one (plist-get (cadr i) :raw-value))) entity-matches)))
+               (jump-to-location (cadr chosen-location) (concat (db-directory) "/" (car chosen-location))))))))
+
 (defun matching-entity-headlines (entity-name entity-files)
   "Fetches a list of matching headlines from `entity-files'"
   (org-map-entries #'(lambda () (cons (buffer-name) (cdr (org-element--current-element peridot-max-character-entry))))
                    (format "/%s/" entity-name)
                    entity-files))
-
-;; (defun peridot-find-this-character ()
-;;   "Prompts user to pick what character to use, given an alias.
-;;   Just returns the headline if there's only one."
-;;   (interactive)
-;;   (let* ((character-name (word-at-point))
-;;          (character-occurances (matching-character-headlines character-name))
-;;          (character-entries (seq-filter
-;;                              #'(lambda (entry) (string-match-p (regexp-quote character-name) (plist-get entry :raw-value)))
-;;                              (seq-map #'cadr
-;;                                       (seq-filter #'(lambda (entry) (eq (car entry) 'headline)) character-occurances)))))
-;;     (cond ((eq nil character-entries)
-;;            (message (format "No characters named '%s' found" character-name)))
-;;           ((= (length character-entries) 1)
-;;            (jump-to-location (car character-entries) (character-file)))
-;;           (t (let* ((chosen-one (selectrum-completing-read (format "Which \"%s\"? " character-name) (seq-map #'(lambda (a) (plist-get a :raw-value)) character-entries)))
-;;                     (chosen-location (seq-find #'(lambda (i) (equal chosen-one (plist-get i :raw-value))) character-entries)))
-;;                (jump-to-location chosen-location (character-file)))))))
-
-;; (defun matching-character-headlines (character-name)
-;;   "Fetches a list of matching character headlines"
-;;   (org-map-entries #'(lambda () (org-element--current-element 300))
-;;                    (format "/%s/" character-name)
-;;                    (list (character-file))))
 
 (defun jump-to-location (headline-desc filename)
   (xref-push-marker-stack)
