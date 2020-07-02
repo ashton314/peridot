@@ -5,6 +5,7 @@
 (require 'org)
 (require 'selectrum)
 (require 'seq)
+(require 'xref)
 
 (defcustom peridot-db-name ".peridot" "Directory under which peridot will search for database")
 (defcustom peridot-max-character-entry 300 "Maximum length of a character entry")
