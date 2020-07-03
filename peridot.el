@@ -2,14 +2,26 @@
 
 ;; Copyright © 2020 Ashton Wiersdorf
 
+;; Author: Ashton Wiersdorf <ashton.wiersdorf@pobox.com>
+;; Created: 27 Jun 2020
+;; URL: https://github.com/ashton314/peridot
+;; Version: 0.0.1
+;; Package-Requires: ((emacs "26.1") (selectrum 1.0) (xref "25.1"))
+;; Keywords: extensions writing
+
 (require 'org)
 (require 'selectrum)
 (require 'seq)
 (require 'xref)
 
-(defcustom peridot-db-name ".peridot" "Directory under which peridot will search for database")
-(defcustom peridot-max-character-entry 300 "Maximum length of a character entry")
-(defcustom peridot-inital-entities '("characters" "plot" "world" "research") "Default set of db files to create")
+(defgroup peridot nil
+  "Tools for writing a novel."
+  :prefix "peridot-"
+  :link '(url-link "https://github.com/ashton314/peridot"))
+
+(defcustom peridot-db-name ".peridot" "Directory under which peridot will search for database." :type 'string)
+(defcustom peridot-max-character-entry 300 "Maximum length of a character entry." :type 'integer)
+(defcustom peridot-inital-entities '("characters" "plot" "world" "research") "Default set of db files to create." :type '(repeat string))
 
 (defun db-directory ()
   "Returns full path to the peridot database directory."
@@ -80,6 +92,7 @@ Keybindings
 \\{peridot-map}
 "
   :lighter " peridot"
+  :group 'peridot
   :keymap (let ((peridot-map (make-sparse-keymap)))
             (define-key peridot-map (kbd "M-.") 'peridot-find-entity)
             peridot-map))
