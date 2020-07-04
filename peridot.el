@@ -48,6 +48,15 @@ directory named `.peridot/' in the current working directory"
               peridot-inital-entities)
     (message (format "\aUnable to create directory %s" db-directory))))
 
+(defun peridot-new-entity ()
+  "Prompt user to create a new entity."
+  (interactive)
+  nil)
+
+(defun peridot--write-new-entity (entity-name entity-file)
+  "Create a new headline in `entity-file' named `entity-name'."
+  nil)
+
 (defun peridot-find-entity ()
   "Searches all entity files in db for headlines that match the current word."
   (interactive)
