@@ -53,11 +53,14 @@ directory named `.peridot/' in the current working directory"
   (interactive)
   (let* ((entity-type (completing-read "Entity type: " (seq-map #'(lambda (file-name) (f-base file-name)) (all-entity-files)) nil t))
          (name (read-string (format "New entry in %s name: " entity-type))))
-    (pp `(entity-type ,entity-type entity-name ,name))))
+    (peridot--write-new-entity name (entity-file entity-type))
+    (find-file (entity-file entity-type))
+    (end-of-buffer)))
 
 (defun peridot--write-new-entity (entity-name entity-file)
-  "Create a new headline in `entity-file' named `entity-name'."
-  nil)
+  "Create a new headline in `entity-file' named `entity-name'; return the location."
+  (write-region (format "* %s\n" entity-name) nil entity-file t))
+
 
 (defun peridot-find-entity ()
   "Searches all entity files in db for headlines that match the current word."
