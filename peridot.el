@@ -6,13 +6,13 @@
 ;; Created: 27 Jun 2020
 ;; URL: https://github.com/ashton314/peridot
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "26.1") (selectrum 1.0) (xref "25.1"))
+;; Package-Requires: ((emacs "26.1") (xref "25.1"))
 ;; Keywords: extensions writing
 
 (require 'org)
-(require 'selectrum)
 (require 'seq)
 (require 'xref)
+(require 'f)
 
 (defgroup peridot nil
   "Tools for writing a novel."
@@ -51,7 +51,9 @@ directory named `.peridot/' in the current working directory"
 (defun peridot-new-entity ()
   "Prompt user to create a new entity."
   (interactive)
-  nil)
+  (let* ((entity-type (completing-read "Entity type: " (seq-map #'(lambda (file-name) (f-base file-name)) (all-entity-files)) nil t))
+         (name (read-string (format "New entry in %s name: " entity-type))))
+    (pp `(entity-type ,entity-type entity-name ,name))))
 
 (defun peridot--write-new-entity (entity-name entity-file)
   "Create a new headline in `entity-file' named `entity-name'."
@@ -75,8 +77,8 @@ directory named `.peridot/' in the current working directory"
            (jump-to-location (cadar entity-matches) (concat (db-directory) "/" (caar entity-matches))))
 
           ;; Let user pick from set of matches
-          (t (let* ((chosen-one (selectrum-completing-read (format "Which \"%s\"? " entity-name)
-                                                           (seq-map #'(lambda (a) (plist-get (cadr a) :raw-value)) entity-matches)))
+          (t (let* ((chosen-one (completing-read (format "Which \"%s\"? " entity-name)
+                                                 (seq-map #'(lambda (a) (plist-get (cadr a) :raw-value)) entity-matches)))
                     (chosen-location (seq-find #'(lambda (i) (equal chosen-one (plist-get (cadr i) :raw-value))) entity-matches)))
                (jump-to-location (cadr chosen-location) (concat (db-directory) "/" (car chosen-location))))))))
 
